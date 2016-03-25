@@ -1,4 +1,6 @@
-import sklearn, re, os, nltk,string, csv, random, json
+import sklearn, re, os, nltk,string, csv, random, json, scipy, numpy as np
+from sklearn.feature_extraction.text import CountVectorizer
+
 
 def remove_punctuation(txt):
 	return txt.translate(None, string.punctuation)
@@ -114,16 +116,29 @@ for row in train_data:
 print "the vocab is {} words".format(len(vocab))
 print "the wordcount is {}". format(wordcount)
 
-#Compute the occurrences of the words in each review and collect them 
-#into a row vector.
-vocablist=vocab.keys()
+vectorizer=CountVectorizer(token_pattern=r'\b\w+\b')
 
+for row in test_data:
+# 	#wordvector=[row[3].split().count(i) for i in vocablist]
 
+# Build a sparse matrix where each row is the word count vector for the corresponding review. 
+# Call this matrix train_matrix.
+# for row in test_data:
+# 	#wordvector=[row[3].split().count(i) for i in vocablist]
+# 	wordmatrix.append(scipy.sparse.csr_matrix([row[3].split().count(i) for i in vocablist]))
+# 	#coo_matrix is also a thing
+# 	#train_matrix.append(wordmatrix)
+# 
+# 
+# print "the {} is {} items long".format("train matrix", len(train_matrix))
+# #train_matrix=[numpy.sparse.csr_matrix(i) for i in wordmatrix]
+# # for row in test_data:
+# 	#wordvector=[row[3].split().count(i) for i in vocablist]
+# 	test_matrix=scipy.sparse.csr_matrix([row[3].split().count(i) for i in vocablist])
 
-for row in train_data:
-	wordvector=[row[3].split().count(i) for i in vocablist]
-	print sum(wordvector)
-	break
+print "this is done"
+
+	
 	
 
  	
