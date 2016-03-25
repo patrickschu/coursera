@@ -23,46 +23,46 @@ outputname="amazon_edited.csv"
 
 
 #reading in 
-inputi=open("amazon_baby.csv", "r")
-csvinputi=csv.reader(inputi, dialect="excel")
-
-#writing out
-outputi=open(outputname, "a")
-csvoutputi=csv.writer(outputi, dialect="excel")
-
-newcsv=[]
-
-#stuff
-x=0
-
-row0=csvinputi.next()
-row0=row0+['cleantext', 'sentiment']
-print row0
-newcsv.append(row0)
-print newcsv
-
-
-for row in csvinputi:
-#0 is name, 1 is review, 2 is star number
-		#cleantext=remove_punctuation(row[1])
-		cleantext=csvupdater(row, row[1], 'cleantext', remove_punctuation)
-		sentiment=csvupdater(row, row[2], 'sentiment', stars_to_sentiment)
-# 		print sentiment
-		newrow=row+[cleantext, sentiment]
-		# print newrow
-		if newrow[2] != '3':
-			newcsv.append(newrow)
-		# print newcsv
-# 		x=x+1
-#  		if x > 5:
-#  			break
-
-
+# inputi=open("amazon_baby.csv", "r")
+# csvinputi=csv.reader(inputi, dialect="excel")
 # 
-	
+# #writing out
+# outputi=open(outputname, "w")
+# csvoutputi=csv.writer(outputi, dialect="excel")
+# 
+# newcsv=[]
+# 
+# #stuff
+# x=0
+# 
+# row0=csvinputi.next()
+# row0=row0+['cleantext', 'sentiment']
+# print row0
+# newcsv.append(row0)
+# print newcsv
+# 
+# 
+# for row in csvinputi:
+# #0 is name, 1 is review, 2 is star number
+# 		#cleantext=remove_punctuation(row[1])
+# 		cleantext=csvupdater(row, row[1], 'cleantext', remove_punctuation)
+# 		sentiment=csvupdater(row, row[2], 'sentiment', stars_to_sentiment)
+# # 		print sentiment
+# 		newrow=row+[cleantext, sentiment]
+# 		# print newrow
+# 		if newrow[2] != '3':
+# 			newcsv.append(newrow)
+# 		# print newcsv
+# # 		x=x+1
+# #  		if x > 5:
+# #  			break
+# 
+# 
+# # 
+# 	
 # csvoutputi.writerows(newcsv)
-outputi.close()
-
+# outputi.close()
+# 
 
 
 ##NOW TRAINING
@@ -78,21 +78,52 @@ print "the dataset has {} rows".format(len(fullset))
 
 with open("test-idx.json") as jsontestfile:
 	jsontestdata=json.load(jsontestfile)
+	print len(jsontestdata)
+	
 	
 with open("train-idx.json") as jsontrainfile:
 	jsontraindata=json.load(jsontrainfile)
+	print len(jsontraindata)
 	
-testset=[fullset[i] for i in jsontestdata]
-trainset=[fullset[i] for i in jsontraindata]
+	
+test_data=[fullset[i+1] for i in jsontestdata]
+train_data=[fullset[i+1] for i in jsontraindata]
+
 print "----newsflash-----"
-print "the trainingset has {} rows".format(len(trainset))
-print "the testset has {} rows".format(len(testset))
-print "that adds up to {} rows".format(len(testset)+len(trainset)*2)
+print "the trainingset has {} rows".format(len(train_data))
+print "the testset has {} rows".format(len(test_data))
+print "that adds up to {} rows".format(len(test_data)+len(train_data))
+
+
+# Learn a vocabulary (set of all words) from the training data. 
+# Only the words that show up in the training data will be considered for feature extraction
+
+vocab={}
+wordcount=0
+
+for row in train_data:
+	review=row[3].split()
+	for word in review:
+		wordcount=wordcount+1
+		if word not in vocab:
+ 			vocab[word]='TRUE'
+# 			print word.lower(), "success"
+		# else:
+# 			print word.lower()
+# 			break
+print "the vocab is {} words".format(len(vocab))
+print "the wordcount is {}". format(wordcount)
+
+#Compute the occurrences of the words in each review and collect them 
+#into a row vector.
+vocablist=vocab.keys()
 
 
 
-
+for row in train_data:
+	wordvector=[row[3].split().count(i) for i in vocablist]
+	print sum(wordvector)
+	break
 	
-
 
  	
