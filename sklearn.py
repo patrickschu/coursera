@@ -1,5 +1,5 @@
-import sklearn, re, os, nltk,string, csv, random, json, scipy, numpy as np
-from sklearn.feature_extraction.text import CountVectorizer
+import sklearn, re, os, nltk,string, csv, random, json, scipy, numpy as np, time
+from sklearn import linear_model
 
 
 def remove_punctuation(txt):
@@ -107,8 +107,10 @@ for row in train_data:
 	review=row[3].split()
 	for word in review:
 		wordcount=wordcount+1
-		if word not in vocab:
- 			vocab[word]='TRUE'
+		if word.lower() not in vocab:
+ 			vocab[word.lower()]=1
+ 		else:
+ 			vocab[word.lower()]=vocab[word.lower()]+1
 # 			print word.lower(), "success"
 		# else:
 # 			print word.lower()
@@ -116,28 +118,55 @@ for row in train_data:
 print "the vocab is {} words".format(len(vocab))
 print "the wordcount is {}". format(wordcount)
 
-vectorizer=CountVectorizer(token_pattern=r'\b\w+\b')
+vocab={i for i in vocab if vocab[i] > 9}
+print "the final vocab is {} words".format(len(vocab))
+
+
+#just for keeping an eye on this
+progress=[10,100,500,1000,1250, 1500,1750, 2000, 2250, 2500, 2750, len(test_data), len(train_data)]
+count=0
+starttime=time.time()
+print "----iterating the day away-----"
+
+
+## Build a sparse matrix where each row is the word count vector for the corresponding review. 
+# Call this matrix train_matrix.
+test_wordvector=[]
 
 for row in test_data:
-# 	#wordvector=[row[3].split().count(i) for i in vocablist]
+	test_wordvector.append([row[3].split().count(i) for i in vocab])
+	count=count+1
+	if count in progress:
+		print "we're at row {}, it took us {}".format(count, time.time()-starttime)
 
-# Build a sparse matrix where each row is the word count vector for the corresponding review. 
-# Call this matrix train_matrix.
-# for row in test_data:
-# 	#wordvector=[row[3].split().count(i) for i in vocablist]
-# 	wordmatrix.append(scipy.sparse.csr_matrix([row[3].split().count(i) for i in vocablist]))
-# 	#coo_matrix is also a thing
-# 	#train_matrix.append(wordmatrix)
-# 
-# 
-# print "the {} is {} items long".format("train matrix", len(train_matrix))
-# #train_matrix=[numpy.sparse.csr_matrix(i) for i in wordmatrix]
-# # for row in test_data:
-# 	#wordvector=[row[3].split().count(i) for i in vocablist]
-# 	test_matrix=scipy.sparse.csr_matrix([row[3].split().count(i) for i in vocablist])
+print "building a matrix"
+test_matrix=scipy.sparse.coo_matrix(test_wordvector)
+print "lenght of test wordvector list is {}".format(len(test_wordvector))
+
+
+train_wordvector=[]
+
+for row in train_data:
+	train_wordvector.append([row[3].split().count(i) for i in vocab])
+	count=count+1
+	if count in progress:
+		print "we're at row {}, it took us {}".format(count, time.time()-starttime)
+
+train_matrix=scipy.sparse.coo_matrix(train_wordvector)
+print "lenght of train wordvector list is {}".format(len(train_wordvector))
+
+#model biulding
+sentiment_model=linear_model.LogisticRegression()
+print "let us build the model {}".format(str(sentiment_model))
+sentiment_model.fit(train_matrix, [i[4] for i in train_data[1:len(train_data)]])
+print type (sentiment_model.coef_)
+print len(np.ndarray.tolist(sentiment_model.coef_)[0])
+#print [len(i) for i in np.ndarray.tolist(sentiment_model.coef_)[0]]
+print len([i for i in np.ndarray.tolist(sentiment_model.coef_)[0] if float(i) > 0])
 
 print "this is done"
 
+os.system('say "your program is finished"')
 	
 	
 
