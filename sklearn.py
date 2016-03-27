@@ -124,7 +124,6 @@ print "the final vocab is {} words".format(len(vocab))
 
 #just for keeping an eye on this
 progress=[10,100,500,1000,1250, 1500,1750, 2000, 2250, 2500, 2750, len(test_data), len(train_data)]
-count=0
 starttime=time.time()
 print "----iterating the day away-----"
 
@@ -132,6 +131,7 @@ print "----iterating the day away-----"
 ## Build a sparse matrix where each row is the word count vector for the corresponding review. 
 # Call this matrix train_matrix.
 test_wordvector=[]
+count=0
 
 for row in test_data:
 	test_wordvector.append([row[3].split().count(i) for i in vocab])
@@ -145,6 +145,7 @@ print "lenght of test wordvector list is {}".format(len(test_wordvector))
 
 
 train_wordvector=[]
+count=0
 
 for row in train_data:
 	train_wordvector.append([row[3].split().count(i) for i in vocab])
