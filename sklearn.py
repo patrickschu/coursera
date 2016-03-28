@@ -123,7 +123,7 @@ print "the final vocab is {} words".format(len(vocab))
 
 
 #just for keeping an eye on this
-progress=[10,100,500,1000,1250, 1500,1750, 2000, 2250, 2500, 2750, len(test_data), len(train_data)]
+progress=range(250, len(train_data), 500)
 starttime=time.time()
 print "----iterating the day away-----"
 
@@ -133,7 +133,7 @@ print "----iterating the day away-----"
 test_wordvector=[]
 count=0
 
-for row in test_data:
+for row in test_data[:1]:
 	test_wordvector.append([row[3].split().count(i) for i in vocab])
 	count=count+1
 	if count in progress:
@@ -155,15 +155,17 @@ for row in train_data:
 
 train_matrix=scipy.sparse.coo_matrix(train_wordvector)
 print "lenght of train wordvector list is {}".format(len(train_wordvector))
+print "length of matrix is {}".format(train_matrix.shape)
+
 
 #model biulding
 sentiment_model=linear_model.LogisticRegression()
 print "let us build the model {}".format(str(sentiment_model))
-sentiment_model.fit(train_matrix, [i[4] for i in train_data[1:len(train_data)]])
+sentiment_model.fit(train_matrix, [i[4] for i in train_data[1:10001]])
 print type (sentiment_model.coef_)
 print len(np.ndarray.tolist(sentiment_model.coef_)[0])
 #print [len(i) for i in np.ndarray.tolist(sentiment_model.coef_)[0]]
-print len([i for i in np.ndarray.tolist(sentiment_model.coef_)[0] if float(i) > 0])
+print "non zero coefficients", len([i for i in np.ndarray.tolist(sentiment_model.coef_)[0] if float(i) > 0])
 
 print "this is done"
 
