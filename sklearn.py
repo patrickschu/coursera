@@ -161,12 +161,12 @@ print "length of matrix is {}".format(train_matrix.shape)
 #model biulding
 sentiment_model=linear_model.LogisticRegression()
 print "let us build the model {}".format(str(sentiment_model))
-sentiment_model.fit(train_matrix, [i[4] for i in train_data[1:10001]])
-print type (sentiment_model.coef_)
+sentiment_model.fit(train_matrix, [i[4] for i in train_data])
+#print type (sentiment_model.coef_)
 print len(np.ndarray.tolist(sentiment_model.coef_)[0])
 #print [len(i) for i in np.ndarray.tolist(sentiment_model.coef_)[0]]
 print "non zero coefficients", len([i for i in np.ndarray.tolist(sentiment_model.coef_)[0] if float(i) > 0])
-
+#non zero coefficients 7461
 print "this is done"
 
 os.system('say "your program is finished"')
