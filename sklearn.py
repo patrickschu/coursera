@@ -17,7 +17,6 @@ def csvupdater(row, column, new_colname, function_to_apply):
 	return result
 	
 
-	
 
 
 #moveable parts
@@ -130,22 +129,11 @@ print "----iterating the day away-----"
 
 ## Build a sparse matrix where each row is the word count vector for the corresponding review. 
 # Call this matrix train_matrix.
-test_wordvector=[]
-count=0
-
-for row in test_data[:1]:
-	test_wordvector.append([row[3].split().count(i) for i in vocab])
-	count=count+1
-	if count in progress:
-		print "we're at row {}, it took us {}".format(count, time.time()-starttime)
-
-print "building a matrix"
-test_matrix=scipy.sparse.coo_matrix(test_wordvector)
-print "lenght of test wordvector list is {}".format(len(test_wordvector))
-
-
 train_wordvector=[]
 count=0
+
+#how much training data do we want?
+train_data=train_data
 
 for row in train_data:
 	train_wordvector.append([row[3].split().count(i) for i in vocab])
@@ -158,6 +146,20 @@ print "lenght of train wordvector list is {}".format(len(train_wordvector))
 print "length of matrix is {}".format(train_matrix.shape)
 
 
+test_wordvector=[]
+count=0
+
+for row in test_data[10:13]:
+	test_wordvector.append([row[3].split().count(i) for i in vocab])
+	count=count+1
+	if count in progress:
+		print "we're at row {}, it took us {}".format(count, time.time()-starttime)
+
+print "building a matrix"
+test_matrix=scipy.sparse.coo_matrix(test_wordvector)
+print "lenght of test wordvector list is {}".format(len(test_wordvector))
+
+
 #model biulding
 sentiment_model=linear_model.LogisticRegression()
 print "let us build the model {}".format(str(sentiment_model))
@@ -167,6 +169,51 @@ print len(np.ndarray.tolist(sentiment_model.coef_)[0])
 #print [len(i) for i in np.ndarray.tolist(sentiment_model.coef_)[0]]
 print "non zero coefficients", len([i for i in np.ndarray.tolist(sentiment_model.coef_)[0] if float(i) > 0])
 #non zero coefficients 7461
+
+
+
+
+#Take the 11th, 12th, and 13th data points in the test data and save them 
+#to sample_test_data.
+sample_test_data=test_data[10:13]
+for i in sample_test_data:
+	print len(i), i
+	print "-----"
+# Quiz question: Of the three data points in sample_test_data, 
+# which one (first, second, or third) has the lowest probability of being classified as a positive review?
+#note that we feed it the output of the iter above
+decfunc=sentiment_model.decision_function(test_matrix)
+prediction=sentiment_model.predict(test_matrix)
+print "decision function: {}".format(decfunc)
+
+print "prediction: {}".format(prediction)
+
+print "real: {}".format("/".join([",".join([i[2], i[4]]) for i in sample_test_data]))
+
+# Using the sentiment_model, find the 20 reviews in the entire test_data with the highest probability of being 
+# classified as a positive review. We refer to these as the "most positive reviews."
+# 
+# To calculate these top-20 reviews, use the following steps:
+# 
+# Make probability predictions on test_data using the sentiment_model.
+# Sort the data according to those predictions and pick the top 20.
+# Quiz Question: Which of the following products are represented in the 20 most positive reviews?
+
+decfunc_all=sentiment_model.decision_function(test_matrix)
+
+decfunc_sorted_pos=sorted(decfunc_all, reverse=True)
+decfunc_sorted_neg=sorted(decfunc_all)
+
+print "Top 20 to be positive: "
+
+for prob in decfunc_sorted_pos[:20]:
+	print prob, "\n---\n"
+
+print "Top 20 to be negative: "
+
+for prob in decfunc_sorted_neg[:20]:
+	print prob, "\n---\n" 
+
 print "this is done"
 
 os.system('say "your program is finished"')
