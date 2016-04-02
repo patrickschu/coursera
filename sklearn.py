@@ -122,7 +122,7 @@ print "the final vocab is {} words".format(len(vocab))
 
 
 #just for keeping an eye on this
-progress=range(250, len(train_data), 500)
+progress=range(0, len(train_data), 1000)
 starttime=time.time()
 print "----iterating the day away-----"
 
@@ -149,7 +149,7 @@ print "length of matrix is {}".format(train_matrix.shape)
 test_wordvector=[]
 count=0
 
-for row in test_data[10:13]:
+for row in test_data:
 	test_wordvector.append([row[3].split().count(i) for i in vocab])
 	count=count+1
 	if count in progress:
@@ -176,11 +176,12 @@ print "non zero coefficients", len([i for i in np.ndarray.tolist(sentiment_model
 #Take the 11th, 12th, and 13th data points in the test data and save them 
 #to sample_test_data.
 sample_test_data=test_data[10:13]
-for i in sample_test_data:
-	print len(i), i
-	print "-----"
+# for i in sample_test_data:
+# 	print len(i), i
+# 	print "-----"
 # Quiz question: Of the three data points in sample_test_data, 
 # which one (first, second, or third) has the lowest probability of being classified as a positive review?
+# [ 4.92644954 -0.60896787 -8.66589186], thus the 3rd one
 #note that we feed it the output of the iter above
 decfunc=sentiment_model.decision_function(test_matrix)
 prediction=sentiment_model.predict(test_matrix)
@@ -188,7 +189,7 @@ print "decision function: {}".format(decfunc)
 
 print "prediction: {}".format(prediction)
 
-print "real: {}".format("/".join([",".join([i[2], i[4]]) for i in sample_test_data]))
+#print "real: {}".format("/".join([",".join([i[2], i[4]]) for i in sample_test_data]))
 
 # Using the sentiment_model, find the 20 reviews in the entire test_data with the highest probability of being 
 # classified as a positive review. We refer to these as the "most positive reviews."
