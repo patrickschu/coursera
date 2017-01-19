@@ -87,12 +87,11 @@ products['review_clean']= products['review'].apply(remove_punctuation)
 # for word in important_words:
 #     products[word] = products['review_clean'].apply(lambda s : s.split().count
 #       (word))
-
+#maybe this would be faster if it were its own dataframe and then merge
 for word in important_words:
 	products[word]= products['review_clean'].apply(lambda s : s.split().count(word))
 
-print products.columns
-
+#print products['great']
 # 6. After #4 and #5, the data frame products should contain one column for each of the 193 important_words. As an example, the column perfect contains a count of the number of times the word perfect occurs in each of the reviews.
 # 
 # 7. Now, write some code to compute the number of product reviews that contain the word perfect.
@@ -100,9 +99,11 @@ print products.columns
 # Hint:
 # 
 # First create a column called contains_perfect which is set to 1 if the count of the word perfect (stored in column perfect is >= 1.
+print len(products[products['perfect']!=0])
+
 # Sum the number of 1s in the column contains_perfect.
 # Quiz Question. How many reviews contain the word perfect?
-# 
+# A: 3001
 # Convert data frame to multi-dimensional array
 # 
 # 8. It is now time to convert our data frame to a multi-dimensional array. Look for a package that provides a highly optimized matrix operations. In the case of Python, NumPy is a good choice.
