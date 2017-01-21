@@ -7,6 +7,7 @@ import codecs
 import string
 import time
 import numpy as np
+from scipy.special import expit
 
 
 # 1. For this assignment, we will use a subset of the Amazon product review dataset. The subset was chosen to contain similar numbers of positive and negative reviews, as the original dataset consisted primarily of positive reviews.
@@ -91,7 +92,7 @@ products['review_clean']= products['review'].apply(remove_punctuation)
 #       (word))
 #maybe this would be faster if it were its own dataframe and then merge
 start=time.time()
-for word in important_words[:10]:
+for word in important_words:
 	print "Adding", word
 	products.insert(0, word, products['review_clean'].apply(lambda s : s.split().count(word)))
 	
@@ -158,7 +159,7 @@ def get_numpy_data(data_frame, features_list, labels):
 
 
 	
-feature_matrix, sentiment=get_numpy_data(products, ['baby', 'great'], 'sentiment')
+#feature_matrix, sentiment=get_numpy_data(products, ['baby', 'one'], 'sentiment')
 
 
 
@@ -181,6 +182,23 @@ feature_matrix, sentiment=get_numpy_data(products, ['baby', 'great'], 'sentiment
 # P(yi=+1|xi,w)=11+exp(−w⊺h(xi)),
 # where the feature vector h(xi) represents the word counts of important_words in the review xi. Write a function named predict_probability that implements the link function.
 # 
+
+# Take two parameters: feature_matrix and coefficients.
+# First compute the dot product of feature_matrix and coefficients.
+# Then compute the link function P(y=+1|x,w).
+# Return the predictions given by the link function.
+# Your code should be analogous to the following Python function:
+
+# Aside. How the link function works with matrix algebra
+# 
+# Since the word counts are stored as columns in feature_matrix, each i-th row of the matrix corresponds to the feature vector h(xi):
+# 
+# [feature_matrix]=⎡⎣⎢⎢⎢⎢h(x1)⊺h(x2)⊺⋮h(xN)⊺⎤⎦⎥⎥⎥⎥=⎡⎣⎢⎢⎢⎢h0(x1)h0(x2)⋮h0(xN)h1(x1)h1(x2)⋮h1(xN)⋯⋯⋱⋯hD(x1)hD(x2)⋮hD(xN)⎤⎦⎥⎥⎥⎥
+# By the rules of matrix multiplication, the score vector containing elements w⊺h(xi) is obtained by multiplying feature_matrix and the coefficient vector w:
+# 
+# [score]=[feature_matrix]w=⎡⎣⎢⎢⎢⎢h(x1)⊺h(x2)⊺⋮h(xN)⊺⎤⎦⎥⎥⎥⎥w=⎡⎣⎢⎢⎢⎢h(x1)⊺wh(x2)⊺w⋮h(xN)⊺w⎤⎦⎥⎥⎥⎥=⎡⎣⎢⎢⎢⎢w⊺h(x1)w⊺h(x2)⋮w⊺h(xN)⎤⎦⎥⎥⎥⎥
+
+
 def predict_probability(feature_matrix, coefficients):
 	"""
 	Parameters: 
@@ -194,18 +212,186 @@ def predict_probability(feature_matrix, coefficients):
 	"""
 	#First compute the dot product of feature_matrix and coefficients.
 	#t=np.dot(feature_matrix, coefficients)
-	dot=np.sum(feature_matrix*coefficients, axis=1)
+	score= np.sum(feature_matrix*coefficients, axis=1)
 	#Then compute the link function P(y=+1|x,w).
-	
+	logit=np.apply_along_axis(lambda x: 1/(1+np.exp(-x)), axis=0, arr=score)
 	#Return the predictions given by the link function.
+	return logit
+	
+#predictions=predict_probability(feature_matrix, [1.,2000])
 
-predict_probability(feature_matrix, [1,2000])
 
-# Take two parameters: feature_matrix and coefficients.
-# First compute the dot product of feature_matrix and coefficients.
-# Then compute the link function P(y=+1|x,w).
-# Return the predictions given by the link function.
+# Compute derivative of log likelihood with respect to a single coefficient
+# 
+# 11. Recall from lecture:
+# 
+# ∂ℓ∂wj=∑i=1Nhj(xi)(1[yi=+1]−P(yi=+1|xi,w))
+# We will now write a function feature_derivative that computes the derivative of log likelihood with respect to a single coefficient w_j. The function accepts two arguments:
+# 
+# errors: vector whose i-th value contains
+# 1[yi=+1]−P(yi=+1|xi,w)
+# feature: vector whose i-th value contains
+# hj(xi)
+# This corresponds to the j-th column of feature_matrix.
+# 
+# The function should do the following:
+# 
+# Take two parameters errors and feature.
+# Compute the dot product of errors and feature.
+# Return the dot product. This is the derivative with respect to a single coefficient w_j.
 # Your code should be analogous to the following Python function:
+# 
+# 
+# 
+# 1
+# 2
+# 3
+# 4
+# 5
+# def feature_derivative(errors, feature):     
+#     # Compute the dot product of errors and feature
+#     derivative = ...
+#         # Return the derivative
+#     return derivative
+
+def feature_derivative(errors, feature_column):
+	"""
+	Compute derivative of log likelihood with respect to a single coefficient
+	Parameters:
+	---
+	errors: vector whose i-th value contains
+	1[yi=+1]−P(yi=+1|xi,w)
+	feature: vector whose i-th value contains
+	hj(xi)
+	This corresponds to the j-th column of feature_matrix.
+	Returns:
+	---
+	the dot product
+	"""
+	#print "errors", errors
+	#print "column", feature_column
+	# t=np.dot(feature_column, errors)
+	# Compute the dot product of errors and feature.
+	derivative= np.sum(feature_column*errors)
+	# Return the dot product. This is the derivative with respect to a single coefficient w_j.
+	return derivative
+
+#feature_derivative(1-predictions, products['baby'].as_matrix())
+
+
+
+
+# 12. In the main lecture, our focus was on the likelihood. In the advanced optional video, however, we introduced a transformation of this likelihood---called the log-likelihood---that simplifies the derivation of the gradient and is more numerically stable. Due to its numerical stability, we will use the log-likelihood instead of the likelihood to assess the algorithm.
+# 
+# The log-likelihood is computed using the following formula (see the advanced optional video if you are curious about the derivation of this equation):
+# 
+# ℓℓ(w)=∑i=1N((1[yi=+1]−1)w⊺h(wi)−ln(1+exp(−w⊺h(xi))))
+# Write a function compute_log_likelihood that implements the equation. The function would be analogous to the following Python function:
+# 
+
+def compute_log_likelihood(feature_matrix, sentiment, coefficients):
+	"""
+	The log-likelihood is computed using the following formula 
+	 ℓℓ(w)=∑i=1N((1[yi=+1]−1)w⊺h(wi)−ln(1+exp(−w⊺h(xi))))
+	Write a function compute_log_likelihood that implements the equation. 
+	The function would be analogous to the following Python function.
+	"""
+	indicator= (sentiment==+1)
+	#print "indicator", indicator-1
+	#this gives us array([False, False,  True, False, False]
+	#apparently this translates to [0,0,1,0,0]
+	scores= np.sum(feature_matrix*coefficients, axis=1)
+	#print scores
+	#print np.dot(feature_matrix,coefficients)
+	lp= np.sum((indicator-1)*scores - np.log(1.+np.exp(-scores)))
+	return lp
+
+#compute_log_likelihood(products[['baby','one']].as_matrix(), products['sentiment'].as_matrix(), [1,2])
+
+
+# 
+# 13. Now we are ready to implement our own logistic regression. All we have to do is to write a 
+#gradient ascent function that takes gradient steps towards the optimum.
+# 
+# Write a function logistic_regression to fit a logistic regression model using gradient ascent.
+# 
+
+def logistic_regression(feature_matrix, sentiment, initial_coefficients, step_size, max_iter):
+	"""
+	Initialize vector coefficients to initial_coefficients.
+	Predict the class probability P(yi=+1|xi,w) using your predict_probability function and save it to variable predictions.
+	Compute indicator value for (yi=+1) by comparing sentiment against +1. Save it to variable indicator.
+	Compute the errors as difference between indicator and predictions. Save the errors to variable errors.
+	For each j-th coefficient, compute the per-coefficient derivative by calling feature_derivative with the j-th column of feature_matrix. Then increment the j-th coefficient by (step_size*derivative).
+	Once in a while, insert code to print out the log likelihood.
+	Repeat steps 2-6 for max_iter times.
+	
+	Parameters:
+	---
+	feature_matrix: 2D array of features
+	sentiment: 1D array of class labels
+	initial_coefficients: 1D array containing initial values of coefficients
+	step_size: a parameter controlling the size of the gradient steps
+	max_iter: number of iterations to run gradient ascent
+	
+	Return:
+	---
+	coefficients
+	"""
+	# Initialize vector coefficients to initial_coefficients.
+	coefs=np.array(initial_coefficients)
+	for iter in xrange(max_iter):
+		print "---\n\nthis is iter", iter
+		# Predict the class probability P(yi=+1|xi,w) using your predict_probability function and save it to variable predictions.
+		predictions= predict_probability(feature_matrix, coefs)
+		# Compute indicator value for (yi=+1) by comparing sentiment against +1. Save it to variable indicator.
+		indicator= (sentiment==+1)
+		# Compute the errors as difference between indicator and predictions. Save the errors to variable errors.
+		errors= indicator-predictions
+		#e.g. 1-.7, 1-.2, 0-.2
+		# For each j-th coefficient, compute the per-coefficient derivative by calling 
+		#feature_derivative with the j-th column of feature_matrix. 
+		#Then increment the j-th coefficient by (step_size*derivative).
+		for coef in xrange(len(coefs)):
+			#print "coef", coef
+			#print "old coefs", coefs
+			derivative= feature_derivative(errors, feature_matrix[:,coef])
+			#print "derivative", derivative
+			coefs[coef]=coefs[coef]+(step_size*derivative)
+			#print "new coefs", coefs
+		
+		likelihood= compute_log_likelihood(feature_matrix, sentiment, coefs)
+		print "likelihood is", likelihood
+		
+	# Once in a while, insert code to print out the log likelihood.
+	
+	# Repeat steps 2-6 for max_iter times.
+	
+	# At the end of day, your code should be analogous to the following Python function (with blanks filled in):
+	# 
+features=products[important_words].as_matrix()
+	
+logistic_regression(features, products['sentiment'].as_matrix(), np.zeros(features.shape[1]), 1e-7, 301)	
+
+# The function accepts the following parameters:
+# 
+# feature_matrix: 2D array of features
+# sentiment: 1D array of class labels
+# initial_coefficients: 1D array containing initial values of coefficients
+# step_size: a parameter controlling the size of the gradient steps
+# max_iter: number of iterations to run gradient ascent
+# The function returns the last set of coefficients after performing gradient ascent.
+# 
+# The function carries out the following steps:
+# 
+# Initialize vector coefficients to initial_coefficients.
+# Predict the class probability P(yi=+1|xi,w) using your predict_probability function and save it to variable predictions.
+# Compute indicator value for (yi=+1) by comparing sentiment against +1. Save it to variable indicator.
+# Compute the errors as difference between indicator and predictions. Save the errors to variable errors.
+# For each j-th coefficient, compute the per-coefficient derivative by calling feature_derivative with the j-th column of feature_matrix. Then increment the j-th coefficient by (step_size*derivative).
+# Once in a while, insert code to print out the log likelihood.
+# Repeat steps 2-6 for max_iter times.
+# At the end of day, your code should be analogous to the following Python function (with blanks filled in):
 # 
 # 
 # 
@@ -224,26 +410,60 @@ predict_probability(feature_matrix, [1,2000])
 # 13
 # 14
 # 15
-# '''
-# produces probablistic estimate for P(y_i = +1 | x_i, w).
-# estimate ranges between 0 and 1.
-# '''
-# def predict_probability(feature_matrix, coefficients):
-#     # Take dot product of feature_matrix and coefficients  
-#     # YOUR CODE HERE
-#     score = ...
-#     
-#     # Compute P(y_i = +1 | x_i, w) using the link function
-#     # YOUR CODE HERE
-#     predictions = ...
-#     
-#     # return predictions
-#     return predictions
-# Aside. How the link function works with matrix algebra
+# 16
+# 17
+# 18
+# 19
+# 20
+# 21
+# 22
+# 23
+# 24
+# 25
+# 26
+# 27
+# 28
+# 29
+# 30
+# 31
+# from math import sqrt
+# def logistic_regression(feature_matrix, sentiment, initial_coefficients, 
+#   step_size, max_iter):
+#     coefficients = np.array(initial_coefficients) # make sure it's a numpy array
+#     for itr in xrange(max_iter):
+#         # Predict P(y_i = +1|x_1,w) using your predict_probability() function
+#         # YOUR CODE HERE
+#         predictions = ...
+#         # Compute indicator value for (y_i = +1)
+#         indicator = (sentiment==+1)
+#         # Compute the errors as indicator - predictions
+#         errors = indicator - predictions
+#         for j in xrange(len(coefficients)): # loop over each coefficient
+#             # Recall that feature_matrix[:,j] is the feature column associated 
+#               with coefficients[j]
+#             # compute the derivative for coefficients[j]. Save it in a variable 
+#               called derivative
+#             # YOUR CODE HERE
+#             derivative = ...
+#             # add the step size times the derivative to the current coefficient
+#             # YOUR CODE HERE
+#             ...
+#         # Checking whether log likelihood is increasing
+#         if itr <= 15 or (itr <= 100 and itr % 10 == 0) or (itr <= 1000 and itr % 
+#           100 == 0) \
+#         or (itr <= 10000 and itr % 1000 == 0) or itr % 10000 == 0:
+#             lp = compute_log_likelihood(feature_matrix, sentiment, coefficients)
+#             print 'iteration %*d: log likelihood of observed labels = %.8f' % \
+#                 (int(np.ceil(np.log10(max_iter))), itr, lp)
+#     return coefficients
+# 14. Now, let us run the logistic regression solver with the parameters below:
 # 
-# Since the word counts are stored as columns in feature_matrix, each i-th row of the matrix corresponds to the feature vector h(xi):
+# feature_matrix = feature_matrix extracted in #9
+# sentiment = sentiment extracted in #9
+# initial_coefficients = a 194-dimensional vector filled with zeros
+# step_size = 1e-7
+# max_iter = 301
+# Save the returned coefficients to variable coefficients.
 # 
-# [feature_matrix]=⎡⎣⎢⎢⎢⎢h(x1)⊺h(x2)⊺⋮h(xN)⊺⎤⎦⎥⎥⎥⎥=⎡⎣⎢⎢⎢⎢h0(x1)h0(x2)⋮h0(xN)h1(x1)h1(x2)⋮h1(xN)⋯⋯⋱⋯hD(x1)hD(x2)⋮hD(xN)⎤⎦⎥⎥⎥⎥
-# By the rules of matrix multiplication, the score vector containing elements w⊺h(xi) is obtained by multiplying feature_matrix and the coefficient vector w:
+# Quiz question: As each iteration of gradient ascent passes, does the log likelihood increase or decrease?
 # 
-# [score]=[feature_matrix]w=⎡⎣⎢⎢⎢⎢h(x1)⊺h(x2)⊺⋮h(xN)⊺⎤⎦⎥⎥⎥⎥w=⎡⎣⎢⎢⎢⎢h(x1)⊺wh(x2)⊺w⋮h(xN)⊺w⎤⎦⎥⎥⎥⎥=⎡⎣⎢⎢⎢⎢w⊺h(x1)w⊺h(x2)⋮w⊺h(xN)⎤⎦⎥⎥⎥⎥
