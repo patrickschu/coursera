@@ -6,6 +6,7 @@ import json
 import codecs
 import string
 import time
+import numpy as np
 
 
 # 1. For this assignment, we will use a subset of the Amazon product review dataset. The subset was chosen to contain similar numbers of positive and negative reviews, as the original dataset consisted primarily of positive reviews.
@@ -180,6 +181,26 @@ feature_matrix, sentiment=get_numpy_data(products, ['baby', 'great'], 'sentiment
 # P(yi=+1|xi,w)=11+exp(−w⊺h(xi)),
 # where the feature vector h(xi) represents the word counts of important_words in the review xi. Write a function named predict_probability that implements the link function.
 # 
+def predict_probability(feature_matrix, coefficients):
+	"""
+	Parameters: 
+	---
+	feature_matrix 
+	coefficients.
+	
+	Returns:
+	---
+	predictions given by the link function.
+	"""
+	#First compute the dot product of feature_matrix and coefficients.
+	#t=np.dot(feature_matrix, coefficients)
+	dot=np.sum(feature_matrix*coefficients, axis=1)
+	#Then compute the link function P(y=+1|x,w).
+	
+	#Return the predictions given by the link function.
+
+predict_probability(feature_matrix, [1,2000])
+
 # Take two parameters: feature_matrix and coefficients.
 # First compute the dot product of feature_matrix and coefficients.
 # Then compute the link function P(y=+1|x,w).
