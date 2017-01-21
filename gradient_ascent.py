@@ -5,6 +5,7 @@ import pandas
 import json
 import codecs
 import string
+import time
 
 
 # 1. For this assignment, we will use a subset of the Amazon product review dataset. The subset was chosen to contain similar numbers of positive and negative reviews, as the original dataset consisted primarily of positive reviews.
@@ -88,8 +89,13 @@ products['review_clean']= products['review'].apply(remove_punctuation)
 #     products[word] = products['review_clean'].apply(lambda s : s.split().count
 #       (word))
 #maybe this would be faster if it were its own dataframe and then merge
-for word in important_words:
-	products[word]= products['review_clean'].apply(lambda s : s.split().count(word))
+start=time.time()
+for word in important_words[:10]:
+	print "Adding", word
+	products.insert(0, word, products['review_clean'].apply(lambda s : s.split().count(word)))
+	
+end=time.time()
+print "This took us {} minutes".format((end-start)/60)
 
 #print products['great']
 # 6. After #4 and #5, the data frame products should contain one column for each of the 193 important_words. As an example, the column perfect contains a count of the number of times the word perfect occurs in each of the reviews.
@@ -99,7 +105,7 @@ for word in important_words:
 # Hint:
 # 
 # First create a column called contains_perfect which is set to 1 if the count of the word perfect (stored in column perfect is >= 1.
-print len(products[products['perfect']!=0])
+#print len(products[products['perfect']!=0])
 
 # Sum the number of 1s in the column contains_perfect.
 # Quiz Question. How many reviews contain the word perfect?
@@ -131,28 +137,41 @@ print len(products[products['perfect']!=0])
 # Users of SFrame or Pandas would execute these steps as follows:
 # 
 # 
-# 
-# 1
-# 2
-# 3
-# 4
-# 5
-# 6
-# 7
-# 8
-# def get_numpy_data(dataframe, features, label):
-#     dataframe['constant'] = 1
-#     features = ['constant'] + features
-#     features_frame = dataframe[features]
-#     feature_matrix = features_frame.as_matrix()
-#     label_sarray = dataframe[label]
-#     label_array = label_sarray.as_matrix()
-#     return(feature_matrix, label_array)
+def get_numpy_data(data_frame, features_list, labels):
+	"""
+	Parameters
+	----
+	dataframe: a data frame to be converted
+	features: a list of string, containing the names of the columns that are used as features.
+	label: a string, containing the name of the single column that is used as class labels.
+	Returns
+	---
+	The function should return two values:
+	one 2D array for features 
+	one 1D array for class labels
+	"""
+	data_frame.insert(0, 'constant', 1)
+	matrix= data_frame[features_list].as_matrix()
+	label_column= data_frame[labels].as_matrix()
+	return  matrix, label_column
+
+
+	
+feature_matrix, sentiment=get_numpy_data(products, ['baby', 'great'], 'sentiment')
+
+
+
+
+
+
 # 9. Using the function written in #8, extract two arrays feature_matrix and sentiment. The 2D array feature_matrix would contain the content of the columns given by the list important_words. The 1D array sentiment would contain the content of the column sentiment.
 # 
 # Quiz Question: How many features are there in the feature_matrix?
-# 
+# 192 or however long important_words is
+
+
 # Quiz Question: Assuming that the intercept is present, how does the number of features in feature_matrix relate to the number of features in the logistic regression model?
+# they are features less 1, if you count the intercept
 # 
 # Estimating conditional probability with link function
 # 
