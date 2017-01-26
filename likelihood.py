@@ -1,4 +1,7 @@
 from scipy import special
+import scipy
+import numpy as np
+
 
 """
 these all assume we have been given a count for an x and the respective true label. 
@@ -20,7 +23,7 @@ def likelihoodmachine(list_of_positive_x, list_of_negative_x):
 	print listmultiplier([poshoods,neghoods])
 	return listmultiplier([poshoods,neghoods])
 
-#likelihoodmachine([2.5,2.8,0.5], [0.3])
+likelihoodmachine([2.5,2.8,0.5], [0.3])
 
 def derivativemachine(weight_of_x, list_of_positive_x, list_of_negative_x):
 	"""
@@ -36,4 +39,6 @@ def derivativemachine(weight_of_x, list_of_positive_x, list_of_negative_x):
 	return sum(poshoods+neghoods)
 	
 
-derivativemachine(1, [2.5,2.8,0.5], [0.3])
+x=derivativemachine(1, [2.5,2.8,0.5], [0.3])
+print scipy.exp(x)
+print np.log(x)
