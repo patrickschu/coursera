@@ -94,7 +94,7 @@ def get_numpy_data(data_frame, features_list, labels):
 	one 1D array for class labels
 	"""
 	data_frame.insert(0, 'constant', 1)
-	matrix= data_frame[features_list].as_matrix()
+	matrix= data_frame[features_list+['constant']].as_matrix()
 	label_column= data_frame[labels].as_matrix()
 	return  matrix, label_column
 
@@ -177,29 +177,13 @@ def feature_derivative_with_L2(errors, feature_column, coefficient, l2_penalty, 
 	derivative= np.sum(feature_column*errors)
 	# add L2 penalty term for any feature that isn't the intercept.
 	if not feature_is_constant: 
-		derivative= derivative - 2*l2_penalty*np.sum(coefficient**2)
+		derivative= derivative - (2*l2_penalty*coefficient)
 	return derivative
 
 #r=feature_derivative_with_L2(1-predictions, products.as_matrix(), 1, 0.002, False)
 #print "derri", r
 
 
-def compute_log_likelihood(feature_matrix, sentiment, coefficients):
-	"""
-	The log-likelihood is computed using the following formula 
-	 ℓℓ(w)=∑i=1N((1[yi=+1]−1)w⊺h(wi)−ln(1+exp(−w⊺h(xi))))
-	Write a function compute_log_likelihood that implements the equation. 
-	The function would be analogous to the following Python function.
-	"""
-	indicator= (sentiment==+1)
-	#print "indicator", indicator-1
-	#this gives us array([False, False,  True, False, False]
-	#apparently this translates to [0,0,1,0,0]
-	scores= np.sum(feature_matrix*coefficients, axis=1)
-	#print scores
-	#print np.dot(feature_matrix,coefficients)
-	lp= np.sum((indicator-1)*scores - np.log(1.+np.exp(-scores)))
-	return lp
 
 #compute_log_likelihood(products[['baby','one']].as_matrix(), products['sentiment'].as_matrix(), [1,2])
 
@@ -254,6 +238,7 @@ def logistic_regression_with_L2(feature_matrix, sentiment, initial_coefficients,
 	"""
 	# Initialize vector coefficients to initial_coefficients.
 	coefs=np.array(initial_coefficients)
+	print "penalty is", l2_penalty, "\n\n"
 	for iter in xrange(max_iter):
 		print "---\n\nthis is iter", iter
 		# Predict the class probability P(yi=+1|xi,w) using your predict_probability function and save it to variable predictions.
@@ -277,8 +262,7 @@ def logistic_regression_with_L2(feature_matrix, sentiment, initial_coefficients,
 				print "derivative", derivative
 				coefs[coef]=coefs[coef]+(step_size*derivative)
 				print "new coef", coef
-		
-		likelihood= compute_log_likelihood(feature_matrix, sentiment, coefs)
+		likelihood= compute_log_likelihood_with_L2(feature_matrix, sentiment, coefs, l2_penalty)
 		print "likelihood is", likelihood
 		#probs= predict_probability(feature_matrix, coefs)
 		probs= np.sum(feature_matrix*coefs, axis=1)
@@ -290,44 +274,23 @@ def logistic_regression_with_L2(feature_matrix, sentiment, initial_coefficients,
 		correctneg= merge[(merge[:,0]<0) & (merge[:,1]==-1)]
 		print "correct positives", len(correctpos)
 		print "correct negatives", len(correctneg)
-		print "ratio", (float(len(correctpos))+len(correctneg))/len(sentiment)
+		print l2_penalty, "ratio", (float(len(correctpos))+len(correctneg))/len(sentiment)
 		tuplettes= [(w,c) for w,c in zip(important_words, coefs)]
 		sortedtuplettes= sorted(tuplettes, key=lambda x:x[1], reverse=True)
 		print "good", sortedtuplettes[:11]
 		print "bad", sortedtuplettes[-11:]
 		print "final model paras", coefs
-		return {'coefs':coefs, 'good':sortedtuplettes[:11], 'bad':sortedtuplettes[-11:]}
+		return {'coefs':coefs.tolist(), 'good':sortedtuplettes[:11], 'bad':sortedtuplettes[-11:]}
 
 
-
-features=train_data[important_words.append('constant')].as_matrix()
+cols=important_words+['constant']
+print train_data.columns.values
+features=feature_matrix_train
 print "len features", features.shape
 	
-logistic_regression_with_L2(features, train_data['sentiment'].as_matrix(), np.zeros(features.shape[1]+1), 5e-6, 0, 501)	
-
-
-coefficients_0_penalty=logistic_regression_with_L2(features, train_data['sentiment'].as_matrix(), np.zeros(features.shape[1]+1), 5e-6,  0, 501)	
-with codecs.open("0.json", "w") as outi:
-	json.dump(coefficients_0_penalty, outi)
-
-coefficients_4_penalty= logistic_regression_with_L2(features, train_data['sentiment'].as_matrix(), np.zeros(features.shape[1]+1), 5e-6,  4, 501)	
-with codecs.open("4.json", "w") as outi:
-	json.dump(coefficients_4_penalty, outi)
-
-coefficients_10_penalty= logistic_regression_with_L2(features, train_data['sentiment'].as_matrix(), np.zeros(features.shape[1]+1), 5e-6,  10, 501)	
-with codecs.open("10.json", "w") as outi:
-	json.dump(coefficients_10_penalty, outi)
-
-coefficients_1e2_penalty= logistic_regression_with_L2(features, train_data['sentiment'].as_matrix(), np.zeros(features.shape[1]+1), 5e-6,  1e2, 501)	
-with codecs.open("1e2.json", "w") as outi:
-	json.dump(coefficients_1e2_penalty, outi)
-
-coefficients_1e3_penalty= logistic_regression_with_L2(features, train_data['sentiment'].as_matrix(), np.zeros(features.shape[1]+1), 5e-6,  1e3, 501)	
-with codecs.open("1e3.json", "w") as outi:
-	json.dump(coefficients_1e3_penalty, outi)
-
-coefficients_1e5_penalty=logistic_regression_with_L2(features, train_data['sentiment'].as_matrix(), np.zeros(features.shape[1]+1), 5e-6,  1e5, 501)	
-with codecs.open("1e5.json", "w") as outi:
-	json.dump(coefficients_1e5_penalty, outi)
+for pen in [0, 4, 10, 1e2, 1e3, 1e5]:
+	model=logistic_regression_with_L2(feature_matrix_valid, sentiment_valid, np.zeros(194), 5e-6,  pen, 501)	
+	with codecs.open(str(pen)+"valid.json", "w") as outi:
+		json.dump(model, outi)
 
 
