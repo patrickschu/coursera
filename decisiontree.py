@@ -1,3 +1,6 @@
+#!/usr/bin/env python -W ignore::DeprecationWarning
+ 
+ 
 import pandas
 import numpy as np
 import json
@@ -5,6 +8,7 @@ import codecs
 import sklearn
 from sklearn import preprocessing
 from sklearn import model_selection
+import sklearn.tree
 
 # Identifying safe loans with decision trees
 # 
@@ -260,16 +264,15 @@ for feature in categorical_variables:
 	print "\n\n\n++", feature
 	print loans_data[feature][:10]
 	loans_data_one_hot_encoded= pandas.get_dummies(loans_data[feature], prefix=feature)
-	print loans_data_one_hot_encoded[:10]
+	#merging in pandas sucks so much
+	loans_data= pandas.concat([loans_data, loans_data_one_hot_encoded])
+	loans_data = loans_data.drop(feature, 1)
 
-for i in loans_data_one_hot_encoded.columns:
-	loans_data_one_hot_encoded[i]= loans_data_one_hot_encoded[i].fillna(0)
+for i in loans_data.columns:
+	loans_data[i]= loans_data[i].fillna(0)
 	
 	
-loans_data= loans_data_one_hot_encoded
-	
-#     loans_data.remove_column(feature)
-#     loans_data.add_columns(loans_data_unpacked)
+
 # Split data into training and validation
 # 
 # 8. We split the data into training and validation sets using an 80/20 split and specifying seed=1 so everyone gets the same results. Call the training and validation sets train_data and validation_data, respectively.
@@ -289,7 +292,13 @@ train_data, validation_data = sklearn.model_selection.train_test_split(loans_dat
 # Note: You will have to first convert the SFrame into a numpy data matrix, and extract the target labels as a numpy array (Hint: you can use the .to_numpy() method call on SFrame to turn SFrames into numpy arrays). See the API for more information. Make sure to set max_depth=6.
 # 
 # Call this model decision_tree_model.
-# 
+
+decision_tree_model= sklearn.tree.DecisionTreeClassifier(max_depth=6)
+small_model= sklearn.tree.DecisionTreeClassifier(max_depth=2)
+train_data.columns
+decision_tree_model.fit(train_data.drop('safe_loans', axis=1), train_data['safe_loans'])
+print decision_tree_model
+small_model.fit(train_data.drop('safe_loans', axis=1), train_data['safe_loans'])
 # 10. Also train a tree using with max_depth=2. Call this model small_model.
 # 
 # Visualizing a learned model (Optional)
@@ -305,34 +314,52 @@ train_data, validation_data = sklearn.model_selection.train_test_split(loans_dat
 # Predict whether or not a loan is safe.
 # Predict the probability that a loan is safe.
 # 11. First, let's grab 2 positive examples and 2 negative examples. In SFrame, that would be:
-# 
-# 
-# 
-# 1
-# 2
-# 3
-# 4
-# 5
-# 6
-# 7
-# 8
-# 9
-# validation_safe_loans = validation_data[validation_data[target] == 1]
-# validation_risky_loans = validation_data[validation_data[target] == -1]
-# sample_validation_data_risky = validation_risky_loans[0:2]
-# sample_validation_data_safe = validation_safe_loans[0:2]
-# sample_validation_data = sample_validation_data_safe.append
-#   (sample_validation_data_risky)
-# sample_validation_data
+
+validation_safe_loans = validation_data[validation_data['safe_loans'] == 1]
+validation_risky_loans = validation_data[validation_data['safe_loans'] == -1]
+sample_validation_data_risky = validation_risky_loans[0:2]
+sample_validation_data_safe = validation_safe_loans[0:2]
+sample_validation_data = sample_validation_data_safe.append(sample_validation_data_risky)
+
+
+
+sample_validation_data= pandas.concat([sample_validation_data_risky, sample_validation_data_safe])
+
+for i in sample_validation_data.iterrows():
+	print i[1]['safe_loans']
+count=0 
+
+
 # 12. Now, we will use our model to predict whether or not a loan is likely to default. For each row in the sample_validation_data, use the decision_tree_model to predict whether or not the loan is classified as a safe loan. (Hint: if you are using scikit-learn, you can use the .predict() method)
 # 
-# Quiz Question: What percentage of the predictions on sample_validation_data did decision_tree_model get correct?
-# 
+
+for i in sample_validation_data.drop('safe_loans', axis=1).iterrows():
+	count=count+1
+	print count, "risky loans and others"
+	x=decision_tree_model.predict(i[1])
+	print "result", x
+	
+
+
+for i in sample_validation_data.drop('safe_loans', axis=1).iterrows():
+	count=count+1
+	print count, "probs"
+	x=decision_tree_model.predict_proba(i[1])
+	print "result", x, decision_tree_model.predict(i[1])
+
+
+# Quiz Question: What percentage of the predictions on sample_validation_data did decision_tree_model get correct? 50%
+#
+
+
+
 # Explore probability predictions
 # 
 # 13. For each row in the sample_validation_data, what is the probability (according decision_tree_model) of a loan being classified as safe? (Hint: if you are using scikit-learn, you can use the .predict_proba() method)
+
+
 # 
-# Quiz Question: Which loan has the highest probability of being classified as a safe loan?
+# Quiz Question: Which loan has the highest probability of being classified as a safe loan? 
 # 
 # Checkpoint: Can you verify that for all the predictions with probability >= 0.5, the model predicted the label +1?
 # 
