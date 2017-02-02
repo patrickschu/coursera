@@ -2,6 +2,9 @@ import pandas
 import numpy as np
 import json
 import codecs
+import sklearn
+from sklearn import preprocessing
+from sklearn import model_selection
 
 # Identifying safe loans with decision trees
 # 
@@ -200,11 +203,16 @@ print "Number of risky loans : %s" % len(risky_loans_raw)
 # 10
 # # Since there are fewer risky loans than safe loans, find the ratio of the sizes
 # # and use that percentage to undersample the safe loans.
-# percentage = len(risky_loans_raw)/float(len(safe_loans_raw))
-# risky_loans = risky_loans_raw
-# safe_loans = safe_loans_raw.sample(percentage, seed=1)
-# # Append the risky_loans with the downsampled version of safe_loans
-# loans_data = risky_loans.append(safe_loans)
+percentage = len(risky_loans_raw)/float(len(safe_loans_raw))
+risky_loans = risky_loans_raw
+safe_loans = safe_loans_raw.sample(frac=percentage, random_state=1 )
+
+
+
+ # Append the risky_loans with the downsampled version of safe_loans
+loans_data = risky_loans.append(safe_loans)
+print "Number of safe loans  : %s" % len(loans_data[loans_data['safe_loans']==1])
+print "Number of risky loans : %s" % len(loans_data[loans_data['safe_loans']==-1])
 # You can verify now that loans_data is comprised of approximately 50% safe loans and 50% risky loans.
 # 
 # Note: There are many approaches for dealing with imbalanced data, including some where we modify the learning algorithm. These approaches are beyond the scope of this course, but some of them are reviewed in this paper. For this assignment, we use the simplest possible approach, where we subsample the overly represented class to get a more balanced dataset. In general, and especially when the data is highly imbalanced, we recommend using more advanced methods.
@@ -212,12 +220,12 @@ print "Number of risky loans : %s" % len(risky_loans_raw)
 # One-hot encoding
 # 
 
-for c in ['home_ownership']:
-	loans[c]=pandas.get_dummies(loans[c])
-	
-	
-print loans[:10]
-# 7. For scikit-learn's decision tree implementation, it requires numerical values for its data matrix. This means you will have to turn categorical variables into binary features via one-hot encoding. The next assignment has more details about this.
+# for c in ['home_ownership']:
+# 	loans[c]=pandas.get_dummies(loans[c])
+# 	
+# 	
+# print loans[:10]
+# # 7. For scikit-learn's decision tree implementation, it requires numerical values for its data matrix. This means you will have to turn categorical variables into binary features via one-hot encoding. The next assignment has more details about this.
 # 
 # If you are using SFrame, feel free to use this piece of code as is. Refer to the SFrame API documentation for a deeper understanding. If you are using different machine learning software, make sure you prepare the data to be passed to the learning software.
 # 
@@ -240,19 +248,26 @@ print loans[:10]
 # 15
 # 16
 # 17
-# loans_data = risky_loans.append(safe_loans)
-# categorical_variables = []
-# for feat_name, feat_type in zip(loans_data.column_names(), loans_data
-#   .column_types()):
-#     if feat_type == str:
-#         categorical_variables.append(feat_name)
-# for feature in categorical_variables:
-#     loans_data_one_hot_encoded = loans_data[feature].apply(lambda x: {x: 1})
-#     loans_data_unpacked = loans_data_one_hot_encoded.unpack(column_name_prefix
-#       =feature)
-#     # Change None's to 0's
-#     for column in loans_data_unpacked.column_names():
-#         loans_data_unpacked[column] = loans_data_unpacked[column].fillna(0)
+categorical_variables = []
+for feat_name, feat_type in [(i,loans_data[i].dtype) for i in loans_data.columns]:
+     if feat_type == 'O':
+         categorical_variables.append(feat_name)
+         
+print "found these categoricals", categorical_variables
+
+
+for feature in categorical_variables:
+	print "\n\n\n++", feature
+	print loans_data[feature][:10]
+	loans_data_one_hot_encoded= pandas.get_dummies(loans_data[feature], prefix=feature)
+	print loans_data_one_hot_encoded[:10]
+
+for i in loans_data_one_hot_encoded.columns:
+	loans_data_one_hot_encoded[i]= loans_data_one_hot_encoded[i].fillna(0)
+	
+	
+loans_data= loans_data_one_hot_encoded
+	
 #     loans_data.remove_column(feature)
 #     loans_data.add_columns(loans_data_unpacked)
 # Split data into training and validation
@@ -264,7 +279,9 @@ print loans[:10]
 # 
 # 
 # 1
-# train_data, validation_data = loans_data.random_split(.8, seed=1)
+train_data, validation_data = sklearn.model_selection.train_test_split(loans_data, test_size=0.8, random_state=1)
+
+
 # Build a decision tree classifier
 # 
 # 9. Now, let's use the built-in scikit learn decision tree learner (sklearn.tree.DecisionTreeClassifier) to create a loan prediction model on the training data. To do this, you will need to import sklearn, sklearn.tree, and numpy.
