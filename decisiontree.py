@@ -319,7 +319,6 @@ validation_safe_loans = validation_data[validation_data['safe_loans'] == 1]
 validation_risky_loans = validation_data[validation_data['safe_loans'] == -1]
 sample_validation_data_risky = validation_risky_loans[0:2]
 sample_validation_data_safe = validation_safe_loans[0:2]
-sample_validation_data = sample_validation_data_safe.append(sample_validation_data_risky)
 
 
 
@@ -359,16 +358,22 @@ for i in sample_validation_data.drop('safe_loans', axis=1).iterrows():
 
 
 # 
-# Quiz Question: Which loan has the highest probability of being classified as a safe loan? 
+# Quiz Question: Which loan has the highest probability of being classified as a safe loan? The 2nd one
 # 
 # Checkpoint: Can you verify that for all the predictions with probability >= 0.5, the model predicted the label +1?
-# 
+# Yes that is correct
 # Tricky predictions!
 # 
 # 14. Now, we will explore something pretty interesting. For each row in the sample_validation_data, what is the probability (according to small_model) of a loan being classified as safe?
+
+for i in sample_validation_data.drop('safe_loans', axis=1).iterrows():
+	count=count+1
+	print count, "probs"
+	x=small_model.predict_proba(i[1])
+	print "result", x, small_model.predict(i[1])
 # 
 # Quiz Question: Notice that the probability preditions are the exact same for the 2nd and 3rd loans. Why would this happen?
-# 
+# Cause they're in the same leaf
 # Visualize the prediction on a tree
 # 
 # 14a. Note that you should be able to look at the small tree (of depth 2), traverse it yourself, and visualize the prediction being made. Consider the following point in the sample_validation_data:
@@ -382,18 +387,33 @@ for i in sample_validation_data.drop('safe_loans', axis=1).iterrows():
 # Quiz Question: Based on the visualized tree, what prediction would you make for this data point (according to small_model)? (If you don't have Graphviz, you can answer this quiz question by executing the next part.)
 # 
 # 15. Now, verify your prediction by examining the prediction made using small_model.
-# 
+#   [[ 0.48351275  0.          0.51648725]] [ 1.]
 # Evaluating accuracy of the decision tree model
 # 
 # Recall that the accuracy is defined as follows:
 # 
 # accuracy=# correctly classified data points# total data points
 # 16. Evaluate the accuracy of small_model and decision_tree_model on the training data. (Hint: if you are using scikit-learn, you can use the .score() method)
-# 
+
+score_full= decision_tree_model.score(train_data.drop('safe_loans', axis=1), train_data['safe_loans'])
+print "for full tree, score on train is", score_full
+
+
+score_small= small_model.score(train_data.drop('safe_loans', axis=1), train_data['safe_loans'])
+print "for small tree, score on train is", score_small
+
 # Checkpoint: You should see that the small_model performs worse than the decision_tree_model on the training data.
 # 
 # 17. Now, evaluate the accuracy of the small_model and decision_tree_model on the entire validation_data, not just the subsample considered above.
 # 
+
+score_full= decision_tree_model.score(validation_data.drop('safe_loans', axis=1), validation_data['safe_loans'])
+print "for full tree, score is", score_full
+
+
+score_small= small_model.score(validation_data.drop('safe_loans', axis=1), validation_data['safe_loans'])
+print "for small tree, score is", score_small
+
 # Quiz Question: What is the accuracy of decision_tree_model on the validation set, rounded to the nearest .01?
 # 
 # Evaluating accuracy of a complex decision tree model
@@ -401,11 +421,37 @@ for i in sample_validation_data.drop('safe_loans', axis=1).iterrows():
 # Here, we will train a large decision tree with max_depth=10. This will allow the learned tree to become very deep, and result in a very complex model. Recall that in lecture, we prefer simpler models with similar predictive power. This will be an example of a more complicated model which has similar predictive power, i.e. something we don't want.
 # 
 # 18. Using sklearn.tree.DecisionTreeClassifier, train a decision tree with maximum depth = 10. Call this model big_model.
-# 
+#
+
+big_model= sklearn.tree.DecisionTreeClassifier(max_depth=10).fit(train_data.drop('safe_loans', axis=1), train_data['safe_loans'])
+
+
 # 19. Evaluate the accuracy of big_model on the training set and validation set.
 # 
 # Checkpoint: We should see that big_model has even better performance on the training set than decision_tree_model did on the training set.
 # 
+def scorer(fitted_model, data, gold_labels):
+	"""
+	compute accuracy
+	"""
+	data['predi']=fitted_model.predict(data.drop(gold_labels, axis=1))
+	data['accu']=(data['predi']==data[gold_labels])
+	accuracy= float(sum(data['accu']))/data.shape[0]
+	print accuracy
+
+
+
+big_model= sklearn.tree.DecisionTreeClassifier(max_depth=10).fit(train_data.drop('safe_loans', axis=1), train_data['safe_loans'])
+scorer(big_model, train_data, 'safe_loans')
+scorer(big_model, validation_data, 'safe_loans')
+tree_model= sklearn.tree.DecisionTreeClassifier(max_depth=6).fit(train_data.drop('safe_loans', axis=1), train_data['safe_loans'])
+scorer(tree_model, train_data, 'safe_loans')
+scorer(tree_model, validation_data, 'safe_loans')
+small_model= sklearn.tree.DecisionTreeClassifier(max_depth=4).fit(train_data.drop('safe_loans', axis=1), train_data['safe_loans'])
+scorer(small_model, train_data, 'safe_loans')
+scorer(small_model, validation_data, 'safe_loans')
+
+
 # Quiz Question: How does the performance of big_model on the validation set compare to decision_tree_model on the validation set? Is this a sign of overfitting?
 # 
 # Quantifying the cost of mistakes
