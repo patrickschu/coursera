@@ -9,7 +9,7 @@ import sklearn
 from sklearn import preprocessing
 from sklearn import model_selection
 import sklearn.tree
-
+header= "\n\n---\n\n"
 # Identifying safe loans with decision trees
 # 
 # The LendingClub is a peer-to-peer leading company that directly connects borrowers and potential lenders/investors. In this notebook, you will build a classification model to predict whether or not a loan provided by LendingClub is likely to default.
@@ -104,26 +104,7 @@ print "bad", float(sum(loans['safe_loans'] == -1))/loans.shape[0]*100
 # 
 
 # 5. In this assignment, we will be using a subset of features (categorical and numeric). The features we will be using are described in the code comments below. If you are a finance geek, the LendingClub website has a lot more details about these features. Extract these feature columns and target column from the dataset. We will only use these features.
-# 
-# 
-# 1
-# 2
-# 3
-# 4
-# 5
-# 6
-# 7
-# 8
-# 9
-# 10
-# 11
-# 12
-# 13
-# 14
-# 15
-# 16
-# 17
-# 18
+
 features = ['grade',                     # grade of the loan
             'sub_grade',                 # sub-grade of the loan
             'short_emp',                 # one year or less of employment
@@ -144,13 +125,6 @@ target = 'safe_loans'                    # prediction target (y) (+1 means safe,
 # # Extract the feature columns and target column
 loans = loans[features + [target]]
 
-print loans.describe()
-# What remains now is a subset of features and the target that we will use for the rest of this notebook.
-# 
-# Notes to people using other tools
-# 
-# If you are using SFrame, proceed to the section "Sample data to balance classes".
-# 
 # If you are NOT using SFrame, download the list of indices for the training and validation sets:
 # 
 # module-5-assignment-1-train-idx.json.zip
@@ -169,20 +143,6 @@ with codecs.open('/Users/ps22344/Downloads/coursera/module-5-assignment-1-valida
 	validation_idx=json.load(inputjson)
 
 
-# Perform train/validation split using train_idx and validation_idx. In Pandas, for instance:
-# 
-# 
-# 1
-# 2
-train_data = loans.iloc[train_idx]
-validation_data = loans.iloc[validation_idx]
-
-
-
-# Note. Some elements in loans are included neither in train_data nor validation_data. This is to perform sampling to achieve class balance.
-# 
-# Now proceed to the section "Build a decision tree classifier", skipping three sections below.
-# 
 # Sample data to balance classes
 # 
 # 6. As we explored above, our data is disproportionally full of safe loans. Let's create two datasets: one with just the safe loans (safe_loans_raw) and one with just the risky loans (risky_loans_raw).
@@ -193,18 +153,7 @@ print "Number of safe loans  : %s" % len(safe_loans_raw)
 print "Number of risky loans : %s" % len(risky_loans_raw)
 # One way to combat class imbalance is to undersample the larger class until the class distribution is approximately half and half. Here, we will undersample the larger class (safe loans) in order to balance out our dataset. This means we are throwing away many data points. We used seed=1 so everyone gets the same results.
 # 
-# 
-# 
-# 1
-# 2
-# 3
-# 4
-# 5
-# 6
-# 7
-# 8
-# 9
-# 10
+
 # # Since there are fewer risky loans than safe loans, find the ratio of the sizes
 # # and use that percentage to undersample the safe loans.
 percentage = len(risky_loans_raw)/float(len(safe_loans_raw))
@@ -215,43 +164,15 @@ safe_loans = safe_loans_raw.sample(frac=percentage, random_state=1 )
 
  # Append the risky_loans with the downsampled version of safe_loans
 loans_data = risky_loans.append(safe_loans)
-print "Number of safe loans  : %s" % len(loans_data[loans_data['safe_loans']==1])
-print "Number of risky loans : %s" % len(loans_data[loans_data['safe_loans']==-1])
+print "Number of safe loans after balancing : %s" % len(loans_data[loans_data['safe_loans']==1])
+print "Number of risky loans after balancing: %s" % len(loans_data[loans_data['safe_loans']==-1])
 # You can verify now that loans_data is comprised of approximately 50% safe loans and 50% risky loans.
-# 
-# Note: There are many approaches for dealing with imbalanced data, including some where we modify the learning algorithm. These approaches are beyond the scope of this course, but some of them are reviewed in this paper. For this assignment, we use the simplest possible approach, where we subsample the overly represented class to get a more balanced dataset. In general, and especially when the data is highly imbalanced, we recommend using more advanced methods.
+
 # 
 # One-hot encoding
-# 
-
-# for c in ['home_ownership']:
-# 	loans[c]=pandas.get_dummies(loans[c])
-# 	
-# 	
-# print loans[:10]
 # # 7. For scikit-learn's decision tree implementation, it requires numerical values for its data matrix. This means you will have to turn categorical variables into binary features via one-hot encoding. The next assignment has more details about this.
 # 
-# If you are using SFrame, feel free to use this piece of code as is. Refer to the SFrame API documentation for a deeper understanding. If you are using different machine learning software, make sure you prepare the data to be passed to the learning software.
-# 
-# 
-# 
-# 1
-# 2
-# 3
-# 4
-# 5
-# 6
-# 7
-# 8
-# 9
-# 10
-# 11
-# 12
-# 13
-# 14
-# 15
-# 16
-# 17
+
 categorical_variables = []
 for feat_name, feat_type in [(i,loans_data[i].dtype) for i in loans_data.columns]:
      if feat_type == 'O':
@@ -261,8 +182,6 @@ print "found these categoricals", categorical_variables
 
 
 for feature in categorical_variables:
-	print "\n\n\n++", feature
-	print loans_data[feature][:10]
 	loans_data_one_hot_encoded= pandas.get_dummies(loans_data[feature], prefix=feature)
 	#merging in pandas sucks so much
 	loans_data= pandas.concat([loans_data, loans_data_one_hot_encoded])
@@ -272,7 +191,7 @@ for i in loans_data.columns:
 	loans_data[i]= loans_data[i].fillna(0)
 	
 	
-
+print loans_data.columns
 # Split data into training and validation
 # 
 # 8. We split the data into training and validation sets using an 80/20 split and specifying seed=1 so everyone gets the same results. Call the training and validation sets train_data and validation_data, respectively.
@@ -280,9 +199,16 @@ for i in loans_data.columns:
 # Note: In previous assignments, we have called this a train-test split. However, the portion of data that we don't train on will be used to help select model parameters (this is known as model selection). Thus, this portion of data should be called a validation set. Recall that examining performance of various potential models (i.e. models with different parameters) should be on validation set, while evaluation of the final selected model should always be on test data. Typically, we would also save a portion of the data (a real test set) to test our final model on or use cross-validation on the training set to select our final model. But for the learning purposes of this assignment, we won't do that.
 # 
 # 
-# 
-# 1
-train_data, validation_data = sklearn.model_selection.train_test_split(loans_data, test_size=0.8, random_state=1)
+# 
+# train_data, validation_data = sklearn.model_selection.train_test_split(loans_data, test_size=0.8, random_state=1)
+
+train_data = loans_data.iloc[train_idx]
+validation_data = loans_data.iloc[validation_idx]
+
+print train_data.columns
+
+#BUILD MODELS
+big_model= sklearn.tree.DecisionTreeClassifier(max_depth=10).fit(train_data.drop('safe_loans', axis=1), train_data['safe_loans'])
 
 
 # Build a decision tree classifier
@@ -293,27 +219,34 @@ train_data, validation_data = sklearn.model_selection.train_test_split(loans_dat
 # 
 # Call this model decision_tree_model.
 
-decision_tree_model= sklearn.tree.DecisionTreeClassifier(max_depth=6)
-small_model= sklearn.tree.DecisionTreeClassifier(max_depth=2)
-train_data.columns
-decision_tree_model.fit(train_data.drop('safe_loans', axis=1), train_data['safe_loans'])
-print decision_tree_model
-small_model.fit(train_data.drop('safe_loans', axis=1), train_data['safe_loans'])
+decision_tree_model= sklearn.tree.DecisionTreeClassifier(max_depth=6).fit(train_data.drop('safe_loans', axis=1), train_data['safe_loans'])
+
 # 10. Also train a tree using with max_depth=2. Call this model small_model.
-# 
-# Visualizing a learned model (Optional)
-# 
-# 10a. For this optional section, we would like to see what the small learned tree looks like. If you are using scikit-learn and have the package Graphviz, then you will be able to perform this section. If you are using a different software, try your best to follow along.
-# 
-# Visualize small_model in the software of your choice.
-# 
-# Making predictions
-# 
+
+small_model= sklearn.tree.DecisionTreeClassifier(max_depth=2).fit(train_data.drop('safe_loans', axis=1), train_data['safe_loans'])
+
 # Let's consider two positive and two negative examples from the validation set and see what the model predicts. We will do the following:
 # 
 # Predict whether or not a loan is safe.
 # Predict the probability that a loan is safe.
 # 11. First, let's grab 2 positive examples and 2 negative examples. In SFrame, that would be:
+
+
+#SCORER AND DATASET
+
+def scorer(fitted_model, spread_sheet, gold_labels, message):
+	"""
+	compute accuracy
+	"""
+	print "Message: {}".format(message)
+	data=spread_sheet.copy()
+	data['predi']=fitted_model.predict(data.drop(gold_labels, axis=1))
+	data['accu']=(data['predi']==data[gold_labels])
+	accuracy= float(sum(data['accu']))/data.shape[0]
+	print accuracy
+	return accuracy
+	
+
 
 validation_safe_loans = validation_data[validation_data['safe_loans'] == 1]
 validation_risky_loans = validation_data[validation_data['safe_loans'] == -1]
@@ -326,6 +259,7 @@ sample_validation_data= pandas.concat([sample_validation_data_risky, sample_vali
 
 for i in sample_validation_data.iterrows():
 	print i[1]['safe_loans']
+
 count=0 
 
 
@@ -334,17 +268,13 @@ count=0
 
 for i in sample_validation_data.drop('safe_loans', axis=1).iterrows():
 	count=count+1
-	print count, "risky loans and others"
-	x=decision_tree_model.predict(i[1])
+	#print (count, "risky loans and others", 		i[1].shape, 	i[1].values.reshape(1, -1).shape, 	i[1].as_matrix().shape)
+	x=decision_tree_model.predict(i[1].values.reshape(1, -1))
 	print "result", x
-	
+# 	
+# 
+# 
 
-
-for i in sample_validation_data.drop('safe_loans', axis=1).iterrows():
-	count=count+1
-	print count, "probs"
-	x=decision_tree_model.predict_proba(i[1])
-	print "result", x, decision_tree_model.predict(i[1])
 
 
 # Quiz Question: What percentage of the predictions on sample_validation_data did decision_tree_model get correct? 50%
@@ -356,66 +286,71 @@ for i in sample_validation_data.drop('safe_loans', axis=1).iterrows():
 # 
 # 13. For each row in the sample_validation_data, what is the probability (according decision_tree_model) of a loan being classified as safe? (Hint: if you are using scikit-learn, you can use the .predict_proba() method)
 
+for i in sample_validation_data.drop('safe_loans', axis=1).iterrows():
+	count=count+1
+	print count, "regular model probs"
+	x=decision_tree_model.predict_proba(i[1].values.reshape(1, -1))
+	print "result", x, decision_tree_model.predict(i[1].values.reshape(1, -1))
 
 # 
-# Quiz Question: Which loan has the highest probability of being classified as a safe loan? The 2nd one
+# Quiz Question: Which loan has the highest probability of being classified as a safe loan? The 1stone
 # 
 # Checkpoint: Can you verify that for all the predictions with probability >= 0.5, the model predicted the label +1?
 # Yes that is correct
 # Tricky predictions!
 # 
 # 14. Now, we will explore something pretty interesting. For each row in the sample_validation_data, what is the probability (according to small_model) of a loan being classified as safe?
+print header
 
 for i in sample_validation_data.drop('safe_loans', axis=1).iterrows():
 	count=count+1
-	print count, "probs"
-	x=small_model.predict_proba(i[1])
-	print "result", x, small_model.predict(i[1])
+	print count, "small model probs"
+	x=small_model.predict_proba(i[1].values.reshape(1,-1))
+	print "result", x, small_model.predict(i[1].values.reshape(1,-1))
 # 
 # Quiz Question: Notice that the probability preditions are the exact same for the 2nd and 3rd loans. Why would this happen?
 # Cause they're in the same leaf
 # Visualize the prediction on a tree
 # 
-# 14a. Note that you should be able to look at the small tree (of depth 2), traverse it yourself, and visualize the prediction being made. Consider the following point in the sample_validation_data:
-# 
-# 
-# 
-# 1
-# sample_validation_data[1]
-# If you have Graphviz, go ahead and re-visualize small_model here to do the traversing for this data point.
+# 14a. Note that you should be able to look at the small tree (of depth 2), traverse it yourself, and visualize the prediction being made. 
+print "Consider the following point in the sample_validation_data[1]"
+
+
 # 
 # Quiz Question: Based on the visualized tree, what prediction would you make for this data point (according to small_model)? (If you don't have Graphviz, you can answer this quiz question by executing the next part.)
 # 
-# 15. Now, verify your prediction by examining the prediction made using small_model.
-#   [[ 0.48351275  0.          0.51648725]] [ 1.]
+print "Now, verify your prediction by examining the prediction made using small_model."
+
+testpoint= sample_validation_data.drop('safe_loans', axis=1).iloc[1,:]
+print small_model.predict_proba(testpoint.values.reshape(1,-1))
+print small_model.predict(testpoint.values.reshape(1,-1))
+
+
+
 # Evaluating accuracy of the decision tree model
 # 
 # Recall that the accuracy is defined as follows:
 # 
 # accuracy=# correctly classified data points# total data points
-# 16. Evaluate the accuracy of small_model and decision_tree_model on the training data. (Hint: if you are using scikit-learn, you can use the .score() method)
-
-score_full= decision_tree_model.score(train_data.drop('safe_loans', axis=1), train_data['safe_loans'])
-print "for full tree, score on train is", score_full
+print "16. Evaluate the accuracy of small_model and decision_tree_model on the training data. (Hint: if you are using scikit-learn, you can use the .score() method)"
 
 
-score_small= small_model.score(train_data.drop('safe_loans', axis=1), train_data['safe_loans'])
-print "for small tree, score on train is", score_small
+scorer(small_model, train_data, 'safe_loans', "small model on train")
+scorer(decision_tree_model, train_data, 'safe_loans', "dec tree model on train")
 
+#print small_model.score(train_data.drop('safe_loans', axis=1), train_data['safe_loans'])
+#print decision_tree_model.score(train_data.drop('safe_loans', axis=1), train_data['safe_loans'])
 # Checkpoint: You should see that the small_model performs worse than the decision_tree_model on the training data.
 # 
-# 17. Now, evaluate the accuracy of the small_model and decision_tree_model on the entire validation_data, not just the subsample considered above.
+print "17. Now, evaluate the accuracy of the small_model and decision_tree_model on the entire validation_data, not just the subsample considered above."
 # 
+scorer(small_model, validation_data, 'safe_loans', "small model on validation")
+scorer(decision_tree_model, validation_data, 'safe_loans', "dec tree model on validation")
 
-score_full= decision_tree_model.score(validation_data.drop('safe_loans', axis=1), validation_data['safe_loans'])
-print "for full tree, score is", score_full
 
-
-score_small= small_model.score(validation_data.drop('safe_loans', axis=1), validation_data['safe_loans'])
-print "for small tree, score is", score_small
 
 # Quiz Question: What is the accuracy of decision_tree_model on the validation set, rounded to the nearest .01?
-# 
+# 0.851357173632
 # Evaluating accuracy of a complex decision tree model
 # 
 # Here, we will train a large decision tree with max_depth=10. This will allow the learned tree to become very deep, and result in a very complex model. Recall that in lecture, we prefer simpler models with similar predictive power. This will be an example of a more complicated model which has similar predictive power, i.e. something we don't want.
@@ -423,37 +358,20 @@ print "for small tree, score is", score_small
 # 18. Using sklearn.tree.DecisionTreeClassifier, train a decision tree with maximum depth = 10. Call this model big_model.
 #
 
-big_model= sklearn.tree.DecisionTreeClassifier(max_depth=10).fit(train_data.drop('safe_loans', axis=1), train_data['safe_loans'])
-
+scorer(big_model, train_data, 'safe_loans', "giant model on train")
+scorer(big_model, validation_data, 'safe_loans', "giant model on validation")
 
 # 19. Evaluate the accuracy of big_model on the training set and validation set.
 # 
 # Checkpoint: We should see that big_model has even better performance on the training set than decision_tree_model did on the training set.
 # 
-def scorer(fitted_model, data, gold_labels):
-	"""
-	compute accuracy
-	"""
-	data['predi']=fitted_model.predict(data.drop(gold_labels, axis=1))
-	data['accu']=(data['predi']==data[gold_labels])
-	accuracy= float(sum(data['accu']))/data.shape[0]
-	print accuracy
 
 
 
-big_model= sklearn.tree.DecisionTreeClassifier(max_depth=10).fit(train_data.drop('safe_loans', axis=1), train_data['safe_loans'])
-scorer(big_model, train_data, 'safe_loans')
-scorer(big_model, validation_data, 'safe_loans')
-tree_model= sklearn.tree.DecisionTreeClassifier(max_depth=6).fit(train_data.drop('safe_loans', axis=1), train_data['safe_loans'])
-scorer(tree_model, train_data, 'safe_loans')
-scorer(tree_model, validation_data, 'safe_loans')
-small_model= sklearn.tree.DecisionTreeClassifier(max_depth=4).fit(train_data.drop('safe_loans', axis=1), train_data['safe_loans'])
-scorer(small_model, train_data, 'safe_loans')
-scorer(small_model, validation_data, 'safe_loans')
 
 
 # Quiz Question: How does the performance of big_model on the validation set compare to decision_tree_model on the validation set? Is this a sign of overfitting?
-# 
+# YES
 # Quantifying the cost of mistakes
 # 
 # Every mistake the model makes costs money. In this section, we will try and quantify the cost each mistake made by the model. Assume the following:
@@ -467,4 +385,9 @@ scorer(small_model, validation_data, 'safe_loans')
 # Second, compute the number of false positives.
 # Third, compute the number of false negatives.
 # Finally, compute the cost of mistakes made by the model by adding up the costs of true positives and false positves.
-# Quiz Question: Let's assume that each mistake costs us money: a false negative costs $10,000, while a false positive positive costs $20,000. What is the total cost of mistakes made by decision_tree_model on validation_data?
+# Quiz Question: Let's assume that each mistake costs us money: a false negative costs $10,000, while a false positive positive costs $20,000.
+print " What is the total cost of mistakes made by decision_tree_model on validation_data?"
+
+validation_data['predi']=decision_tree_model.predict(validation_data.drop('safe_loans', axis=1))
+validation_data['false_pos']=((validation_data['predi']==1) & (validation_data['safe_loans']==-1))
+print validation_data[['safe_loans', 'predi', 'false_pos']]
