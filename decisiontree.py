@@ -215,10 +215,6 @@ for i in sample_validation_data.drop('safe_loans', axis=1).iterrows():
 	#print (count, "risky loans and others", 		i[1].shape, 	i[1].values.reshape(1, -1).shape, 	i[1].as_matrix().shape)
 	x=decision_tree_model.predict(i[1].values.reshape(1, -1))
 	print "result", x
-# 	
-# 
-# 
-
 
 
 # Quiz Question: What percentage of the predictions on sample_validation_data did decision_tree_model get correct? 50%
@@ -237,7 +233,7 @@ for i in sample_validation_data.drop('safe_loans', axis=1).iterrows():
 	print "result", x, decision_tree_model.predict(i[1].values.reshape(1, -1))
 
 # 
-# Quiz Question: Which loan has the highest probability of being classified as a safe loan? The 1stone
+# Quiz Question: Which loan has the highest probability of being classified as a safe loan? The 4th one
 # 
 # Checkpoint: Can you verify that for all the predictions with probability >= 0.5, the model predicted the label +1?
 # Yes that is correct
