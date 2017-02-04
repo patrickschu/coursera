@@ -54,30 +54,14 @@ header= "\n\n---\n\n"
 # 
 # We will be using a dataset from the LendingClub.
 # 
-# Load the dataset into a data frame named loans. Using SFrame, this would look like
-# 
-# 
-# 1
-# 2
-# import sframe
-# loans = sframe.SFrame('lending-club-data.gl/')
-# Note: To install SFrame (without installing GraphLab Create), run
-# 
-# 
-# 
-# 1
-# pip install sframe
-# Exploring some features
+
 
 loans= pandas.read_csv("/Users/ps22344/Downloads/coursera/lending-club-data.csv", low_memory=False)
 
 print loans.describe()
 
-print loans.columns
-
 # 2. Let's quickly explore what the dataset looks like. First, print out the column names to see what features we have in this dataset. On SFrame, you can run this code:
 # 
-
 print loans.columns
 
 # Exploring the target column
@@ -91,8 +75,6 @@ print loans.columns
 # 3. We put this in a new column called safe_loans.
 # 
 loans['safe_loans']= loans['bad_loans'].apply(lambda x: -1 if x > 0 else +1 )
-
-#only doing this cause they make me
 
 
 # 4. Now, let us explore the distribution of the column safe_loans. This gives us a sense of how many safe and risky loans are present in the dataset. Print out the percentage of safe loans and risky loans in the data frame.
@@ -124,57 +106,20 @@ target = 'safe_loans'                    # prediction target (y) (+1 means safe,
 #   -1 is risky)
 # # Extract the feature columns and target column
 loans = loans[features + [target]]
-
+print "testi", loans.columns
 # If you are NOT using SFrame, download the list of indices for the training and validation sets:
 # 
 # module-5-assignment-1-train-idx.json.zip
 # module-5-assignment-1-validation-idx.json.zip
 # Then follow the following steps:
 # 
-# Apply one-hot encoding to loans. Your tool may have a function for one-hot encoding. Alternatively, see #7 for implementation hints.
-# Load the JSON files into the lists train_idx and validation_idx.
+print "Apply one-hot encoding to loans. "
+#Your tool may have a function for one-hot encoding. Alternatively, see #7 for implementation hints.
 
-
-
-with codecs.open('/Users/ps22344/Downloads/coursera/module-5-assignment-1-train-idx.json', 'r') as inputjson: 
-	train_idx=json.load(inputjson)
-
-with codecs.open('/Users/ps22344/Downloads/coursera/module-5-assignment-1-validation-idx.json', 'r') as inputjson: 
-	validation_idx=json.load(inputjson)
-
-
-# Sample data to balance classes
-# 
-# 6. As we explored above, our data is disproportionally full of safe loans. Let's create two datasets: one with just the safe loans (safe_loans_raw) and one with just the risky loans (risky_loans_raw).
-
-safe_loans_raw = loans[loans[target] == +1]
-risky_loans_raw = loans[loans[target] == -1]
-print "Number of safe loans  : %s" % len(safe_loans_raw)
-print "Number of risky loans : %s" % len(risky_loans_raw)
-# One way to combat class imbalance is to undersample the larger class until the class distribution is approximately half and half. Here, we will undersample the larger class (safe loans) in order to balance out our dataset. This means we are throwing away many data points. We used seed=1 so everyone gets the same results.
-# 
-
-# # Since there are fewer risky loans than safe loans, find the ratio of the sizes
-# # and use that percentage to undersample the safe loans.
-percentage = len(risky_loans_raw)/float(len(safe_loans_raw))
-risky_loans = risky_loans_raw
-safe_loans = safe_loans_raw.sample(frac=percentage, random_state=1 )
-
-
-
- # Append the risky_loans with the downsampled version of safe_loans
-loans_data = risky_loans.append(safe_loans)
-print "Number of safe loans after balancing : %s" % len(loans_data[loans_data['safe_loans']==1])
-print "Number of risky loans after balancing: %s" % len(loans_data[loans_data['safe_loans']==-1])
-# You can verify now that loans_data is comprised of approximately 50% safe loans and 50% risky loans.
-
-# 
-# One-hot encoding
-# # 7. For scikit-learn's decision tree implementation, it requires numerical values for its data matrix. This means you will have to turn categorical variables into binary features via one-hot encoding. The next assignment has more details about this.
-# 
 
 categorical_variables = []
-for feat_name, feat_type in [(i,loans_data[i].dtype) for i in loans_data.columns]:
+
+for feat_name, feat_type in [(i,loans[i].dtype) for i in loans.columns]:
      if feat_type == 'O':
          categorical_variables.append(feat_name)
          
@@ -182,34 +127,31 @@ print "found these categoricals", categorical_variables
 
 
 for feature in categorical_variables:
-	loans_data_one_hot_encoded= pandas.get_dummies(loans_data[feature], prefix=feature)
+	loans_data_one_hot_encoded= pandas.get_dummies(loans[feature], prefix=feature)
 	#merging in pandas sucks so much
-	loans_data= pandas.concat([loans_data, loans_data_one_hot_encoded])
-	loans_data = loans_data.drop(feature, 1)
+	loans= pandas.concat([loans, loans_data_one_hot_encoded])
+	loans = loans.drop(feature, 1)
 
-for i in loans_data.columns:
-	loans_data[i]= loans_data[i].fillna(0)
+for i in loans.columns:
+	loans[i]= loans[i].fillna(0)
 	
 	
-print loans_data.columns
-# Split data into training and validation
-# 
-# 8. We split the data into training and validation sets using an 80/20 split and specifying seed=1 so everyone gets the same results. Call the training and validation sets train_data and validation_data, respectively.
-# 
-# Note: In previous assignments, we have called this a train-test split. However, the portion of data that we don't train on will be used to help select model parameters (this is known as model selection). Thus, this portion of data should be called a validation set. Recall that examining performance of various potential models (i.e. models with different parameters) should be on validation set, while evaluation of the final selected model should always be on test data. Typically, we would also save a portion of the data (a real test set) to test our final model on or use cross-validation on the training set to select our final model. But for the learning purposes of this assignment, we won't do that.
-# 
-# 
-# 
-# train_data, validation_data = sklearn.model_selection.train_test_split(loans_data, test_size=0.8, random_state=1)
+print "teti", loans.columns
 
-train_data = loans_data.iloc[train_idx]
-validation_data = loans_data.iloc[validation_idx]
 
-print train_data.columns
+# Load the JSON files into the lists train_idx and validation_idx.
+
+with codecs.open('/Users/ps22344/Downloads/coursera/module-5-assignment-1-train-idx.json', 'r') as inputjson: 
+	train_idx=json.load(inputjson)
+
+with codecs.open('/Users/ps22344/Downloads/coursera/module-5-assignment-1-validation-idx.json', 'r') as inputjson: 
+	validation_idx=json.load(inputjson)
+
+train_data = loans.iloc[train_idx]
+validation_data = loans.iloc[validation_idx]
+
 
 #BUILD MODELS
-big_model= sklearn.tree.DecisionTreeClassifier(max_depth=10).fit(train_data.drop('safe_loans', axis=1), train_data['safe_loans'])
-
 
 # Build a decision tree classifier
 # 
@@ -226,10 +168,16 @@ decision_tree_model= sklearn.tree.DecisionTreeClassifier(max_depth=6).fit(train_
 small_model= sklearn.tree.DecisionTreeClassifier(max_depth=2).fit(train_data.drop('safe_loans', axis=1), train_data['safe_loans'])
 
 # Let's consider two positive and two negative examples from the validation set and see what the model predicts. We will do the following:
-# 
+
 # Predict whether or not a loan is safe.
 # Predict the probability that a loan is safe.
-# 11. First, let's grab 2 positive examples and 2 negative examples. In SFrame, that would be:
+# 11. First, let's grab 2 positive examples and 2 negative examples.
+
+validation_safe_loans = validation_data[validation_data['safe_loans'] == 1]
+validation_risky_loans = validation_data[validation_data['safe_loans'] == -1]
+sample_validation_data_risky = validation_risky_loans[0:2]
+sample_validation_data_safe = validation_safe_loans[0:2]
+
 
 
 #SCORER AND DATASET
@@ -248,10 +196,6 @@ def scorer(fitted_model, spread_sheet, gold_labels, message):
 	
 
 
-validation_safe_loans = validation_data[validation_data['safe_loans'] == 1]
-validation_risky_loans = validation_data[validation_data['safe_loans'] == -1]
-sample_validation_data_risky = validation_risky_loans[0:2]
-sample_validation_data_safe = validation_safe_loans[0:2]
 
 
 
@@ -354,7 +298,10 @@ scorer(decision_tree_model, validation_data, 'safe_loans', "dec tree model on va
 # Evaluating accuracy of a complex decision tree model
 # 
 # Here, we will train a large decision tree with max_depth=10. This will allow the learned tree to become very deep, and result in a very complex model. Recall that in lecture, we prefer simpler models with similar predictive power. This will be an example of a more complicated model which has similar predictive power, i.e. something we don't want.
-# 
+
+big_model= sklearn.tree.DecisionTreeClassifier(max_depth=10).fit(train_data.drop('safe_loans', axis=1), train_data['safe_loans'])
+
+
 # 18. Using sklearn.tree.DecisionTreeClassifier, train a decision tree with maximum depth = 10. Call this model big_model.
 #
 
