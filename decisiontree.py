@@ -390,4 +390,12 @@ print " What is the total cost of mistakes made by decision_tree_model on valida
 
 validation_data['predi']=decision_tree_model.predict(validation_data.drop('safe_loans', axis=1))
 validation_data['false_pos']=((validation_data['predi']==1) & (validation_data['safe_loans']==-1))
-print validation_data[['safe_loans', 'predi', 'false_pos']]
+#print validation_data[['safe_loans', 'predi', 'false_pos']]
+
+validation_data['false_neg']=((validation_data['predi']==-1) & (validation_data['safe_loans']==1))
+#print validation_data[['safe_loans', 'predi', 'false_pos', 'false_neg']]
+
+
+print "Number of false positives is {} (cost: {}), number of false negatives is {} (cost: {}) out of a total {} rows".format(sum(validation_data['false_pos']), sum(validation_data['false_pos'])*20000, sum(validation_data['false_neg']), sum(validation_data['false_neg'])*10000, unicode(validation_data.shape[0]))
+
+#Number of false positives is 671 (cost: 13420000), number of false negatives is 711 (cost: 7110000) out of a total 9284 rows
