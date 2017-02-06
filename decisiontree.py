@@ -126,11 +126,18 @@ for feat_name, feat_type in [(i,loans[i].dtype) for i in loans.columns]:
 print "found these categoricals", categorical_variables
 
 
-for feature in categorical_variables:
-	loans_data_one_hot_encoded= pandas.get_dummies(loans[feature], prefix=feature)
-	#merging in pandas sucks so much
-	loans= pandas.concat([loans, loans_data_one_hot_encoded])
-	loans = loans.drop(feature, 1)
+encoded=pandas.DataFrame()
+
+	
+for f in categorical_variables:
+	hottie= pandas.get_dummies(loans[f], prefix=f)
+	print "hottie", hottie.shape
+	encoded=pandas.concat([encoded, hottie], axis=1)
+	print "encoded", encoded.shape
+	loans= loans.drop(f, axis=1)
+
+	
+loans= pandas.concat([loans,encoded])
 
 for i in loans.columns:
 	loans[i]= loans[i].fillna(0)
